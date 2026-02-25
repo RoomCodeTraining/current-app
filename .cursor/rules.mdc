@@ -1,0 +1,44 @@
+# Projet : Carte de visite digitale PWA
+
+Ce projet permet à n’importe qui de créer et partager sa propre **carte de visite digitale** directement depuis son téléphone, sans avoir besoin de cartes papier.
+Il utilise **Laravel** pour le backend, **Alpine.js + TailwindCSS** pour le frontend, et est transformé en **PWA** pour être installable sur mobile.
+
+---
+
+## Fonctionnalités principales
+
+- Création instantanée d’une carte de visite personnalisée.
+- Chaque utilisateur obtient un **lien unique** (slug) pour sa carte.
+- Partage facile via **QR code** ou lien direct.
+- Carte interactive avec :
+    - Nom, titre, entreprise
+    - Email et téléphone
+    - LinkedIn et site web
+    - Photo/avatar
+- Possibilité d’ajouter le site à l’écran d’accueil grâce à la PWA.
+- Génération automatique de QR code en vCard pour l’import direct dans les contacts.
+
+---
+
+## Stack technique
+
+- **Backend :** Laravel (PHP 8)
+- **Frontend :** Blade + Alpine.js + TailwindCSS
+- **PWA :** Service Worker + Manifest.json
+- **QR code :** Package [Simple QR Code](https://github.com/SimpleSoftwareIO/simple-qrcode)
+
+---
+
+## Architecture
+
+1. **Modèle `DigitalCard`**
+   Contient toutes les informations d’une carte et un `slug` unique pour chaque utilisateur.
+
+2. **Routes principales**
+
+```text
+GET  /create-card       -> formulaire de création
+POST /create-card       -> création de la carte
+GET  /card/{slug}       -> affichage de la carte publique
+GET  /card/{slug}/qr    -> QR code vCard
+```
