@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 
 // Accueil
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/dashboard', [HomeController::class, 'dashboard'])->name('dashboard');
 Route::post('/', [HomeController::class, 'store']);
 
 // Page détail carte (lien public court /c/AB3X9K)

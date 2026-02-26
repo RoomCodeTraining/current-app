@@ -14,6 +14,21 @@ class ModifierController extends Controller
      */
     public function index(Request $request): View|RedirectResponse
     {
+        $shortCode = $request->query('card');
+        if ($shortCode) {
+            $shortCode = strtoupper(trim($shortCode));
+            $ids = $request->session()->get('editing_card_ids', []);
+            if (!empty($ids)) {
+                $requestedCard = DigitalCard::where('short_code', $shortCode)
+                    ->whereIn('id', $ids)
+                    ->first();
+
+                if ($requestedCard) {
+                    $request->session()->put('editing_card_id', $requestedCard->id);
+                }
+            }
+        }
+
         $card = $this->getEditingCard($request);
 
         if ($card) {
@@ -111,8 +126,10 @@ class ModifierController extends Controller
             'template' => 'nullable|string|in:default,minimal,classic',
         ]);
 
+        $avatarUpdated = false;
         if ($request->hasFile('avatar')) {
             $card->avatar_path = $request->file('avatar')->store('avatars', 'public');
+            $avatarUpdated = true;
         }
 
         $card->fill([
@@ -126,7 +143,11 @@ class ModifierController extends Controller
             'template' => $validated['template'] ?? $card->template,
         ])->save();
 
-        return redirect()->route('modifier.index')->with('success', 'Carte mise à jour.');
+        $message = $avatarUpdated
+            ? 'Carte mise à jour. Votre photo a bien été enregistrée.'
+            : 'Carte mise à jour.';
+
+        return redirect()->route('modifier.index')->with('success', $message);
     }
 
     private function getEditingCard(Request $request): ?DigitalCard

@@ -17,7 +17,7 @@
                             @if($c->id === $card->id)
                                 <span class="font-medium text-[#1b1b18] dark:text-[#EDEDEC]">{{ $c->name }} ({{ $c->short_code }})</span>
                             @else
-                                <a href="{{ route('modifier.switch', $c->short_code) }}" class="text-[#f53003] dark:text-[#FF4433] hover:underline">{{ $c->name }} ({{ $c->short_code }})</a>
+                                <a href="{{ route('modifier.index', ['card' => $c->short_code]) }}" class="text-[#f53003] dark:text-[#FF4433] hover:underline">{{ $c->name }} ({{ $c->short_code }})</a>
                             @endif
                             @if(!$loop->last)<span class="text-[#a8a8a6] dark:text-[#6b6b69]"> · </span>@endif
                         @endforeach
@@ -80,8 +80,9 @@
         </div>
     @endif
 
-    {{-- Aperçu de la carte (tel qu’elle sera vue par les autres) --}}
-    <section class="mb-8" aria-label="Aperçu de ma carte">
+    <div class="grid grid-cols-1 md:grid-cols-2 md:gap-10 lg:gap-12 md:items-start md:max-h-[calc(100dvh-4rem)] md:overflow-hidden">
+        {{-- Aperçu de la carte (tel qu’elle sera vue par les autres) --}}
+        <section class="mb-8 md:mb-0" aria-label="Aperçu de ma carte">
         <h2 class="text-sm font-medium text-[#706f6c] dark:text-[#A1A09A] mb-3">Aperçu de ma carte</h2>
         @include('partials.card-preview', ['card' => $card, 'showActions' => true])
         <p class="mt-4 text-center">
@@ -91,7 +92,7 @@
         </p>
     </section>
 
-    <form action="{{ route('modifier.update') }}" method="post" enctype="multipart/form-data" class="space-y-4" id="edit-card-form">
+    <form action="{{ route('modifier.update') }}" method="post" enctype="multipart/form-data" class="space-y-4 md:col-span-1" id="edit-card-form">
         @method('PUT')
         @csrf
         <input type="hidden" name="template" id="edit-template-input" value="{{ old('template', $card->template ?? 'default') }}">
@@ -159,19 +160,40 @@
         <div>
             <span class="block text-sm font-medium mb-1.5 text-[#1b1b18] dark:text-white">Photo / Avatar</span>
             @if($card->avatar_path)
-                <p class="text-xs text-[#706f6c] dark:text-[#A1A09A] mb-2">Photo actuelle : <img src="{{ Storage::url($card->avatar_path) }}" alt="" class="inline w-8 h-8 rounded-full object-cover align-middle"></p>
+                <p class="text-xs text-[#706f6c] dark:text-[#A1A09A] mb-2">
+                    Photo actuelle :
+                    <img
+                        src="{{ Storage::url($card->avatar_path) }}?v={{ $card->updated_at ? $card->updated_at->timestamp : '' }}"
+                        alt=""
+                        class="inline w-8 h-8 rounded-full object-cover align-middle"
+                    >
+                </p>
             @endif
-            <label for="avatar" class="flex flex-col items-center justify-center w-full min-h-[100px] rounded-xl border-2 border-dashed border-[#e3e3e0] dark:border-[#3E3E3A] bg-[#fafaf9] dark:bg-[#1c1c1a] hover:border-[#1b1b18] dark:hover:border-[#A1A09A] cursor-pointer transition-colors">
+            <label for="avatar" id="avatar-dropzone" class="flex flex-col items-center justify-center w-full min-h-[100px] rounded-xl border-2 border-dashed border-[#e3e3e0] dark:border-[#3E3E3A] bg-[#fafaf9] dark:bg-[#1c1c1a] hover:border-[#1b1b18] dark:hover:border-[#A1A09A] cursor-pointer transition-colors">
                 <input type="file" name="avatar" id="avatar" accept="image/*" class="hidden">
-                <span class="text-sm text-[#706f6c] dark:text-[#A1A09A] mt-2">Cliquez ou déposez une photo</span>
-                <span class="text-xs text-[#706f6c] dark:text-[#A1A09A] mt-0.5">PNG, JPG (max. 2 Mo)</span>
+                <img id="avatar-preview" alt="" class="hidden w-16 h-16 rounded-full object-cover mb-2" />
+                <span id="avatar-dropzone-text" class="text-sm text-[#706f6c] dark:text-[#A1A09A] mt-2">Cliquez ou déposez une photo</span>
+                <span id="avatar-dropzone-subtext" class="text-xs text-[#706f6c] dark:text-[#A1A09A] mt-0.5">PNG, JPG (max. 2 Mo)</span>
+                <span id="avatar-selected-info" class="hidden text-xs text-[#1b1b18] dark:text-[#EDEDEC] mt-1"></span>
             </label>
             @error('avatar')<p class="text-sm text-red-600 dark:text-red-400 mt-1">{{ $message }}</p>@enderror
         </div>
-        <button type="submit" class="w-full py-3 rounded-xl bg-[#1b1b18] dark:bg-[#eeeeec] text-white dark:text-[#1C1C1A] font-medium hover:opacity-90 active:opacity-80 transition-opacity">
-            Enregistrer
+        <button
+            type="submit"
+            id="edit-card-submit"
+            class="w-full py-3 rounded-xl bg-[#1b1b18] dark:bg-[#eeeeec] text-white dark:text-[#1C1C1A] font-medium hover:opacity-90 active:opacity-80 transition-opacity flex items-center justify-center gap-2"
+        >
+            <span id="edit-card-submit-text">Enregistrer</span>
+            <span id="edit-card-submit-loading" class="hidden items-center gap-2">
+                <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"></path>
+                </svg>
+                <span>Enregistrement...</span>
+            </span>
         </button>
     </form>
+    </div>
 
     <script>
         (function() {
@@ -239,6 +261,74 @@
                     }
                 });
             });
+
+            var avatarInput = document.getElementById('avatar');
+            var avatarPreview = document.getElementById('avatar-preview');
+            var avatarInfo = document.getElementById('avatar-selected-info');
+            var avatarDropzone = document.getElementById('avatar-dropzone');
+            var avatarDropzoneText = document.getElementById('avatar-dropzone-text');
+            var avatarDropzoneSubtext = document.getElementById('avatar-dropzone-subtext');
+            if (avatarInput && avatarPreview && avatarInfo && avatarDropzone) {
+                avatarInput.addEventListener('change', function() {
+                    var file = this.files && this.files[0];
+                    if (!file) {
+                        avatarPreview.classList.add('hidden');
+                        avatarInfo.classList.add('hidden');
+                        avatarInfo.textContent = '';
+                        avatarDropzone.classList.remove('border-green-500');
+                        avatarDropzone.classList.add('border-[#e3e3e0]');
+                        if (avatarDropzoneText) {
+                            avatarDropzoneText.textContent = 'Cliquez ou déposez une photo';
+                        }
+                        if (avatarDropzoneSubtext) {
+                            avatarDropzoneSubtext.textContent = 'PNG, JPG (max. 2 Mo)';
+                        }
+                        return;
+                    }
+
+                    avatarInfo.textContent = 'Photo sélectionnée : ' + file.name;
+                    avatarInfo.classList.remove('hidden');
+                    avatarDropzone.classList.add('border-green-500');
+                    avatarDropzone.classList.remove('border-[#e3e3e0]');
+                    if (avatarDropzoneText) {
+                        avatarDropzoneText.textContent = 'Une photo a été sélectionnée ✔';
+                    }
+                    if (avatarDropzoneSubtext) {
+                        avatarDropzoneSubtext.textContent = 'N’oubliez pas de cliquer sur "Enregistrer".';
+                    }
+
+                    if (file.type && file.type.indexOf('image') === 0 && window.FileReader) {
+                        var reader = new FileReader();
+                        reader.onload = function(e) {
+                            avatarPreview.src = e.target.result;
+                            avatarPreview.classList.remove('hidden');
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        avatarPreview.classList.add('hidden');
+                    }
+                });
+            }
+
+            var editForm = document.getElementById('edit-card-form');
+            var editSubmit = document.getElementById('edit-card-submit');
+            var editSubmitText = document.getElementById('edit-card-submit-text');
+            var editSubmitLoading = document.getElementById('edit-card-submit-loading');
+
+            if (editForm && editSubmit) {
+                editForm.addEventListener('submit', function() {
+                    if (editSubmit.disabled) {
+                        return;
+                    }
+                    editSubmit.disabled = true;
+                    editSubmit.classList.add('opacity-70', 'cursor-not-allowed');
+
+                    if (editSubmitText && editSubmitLoading) {
+                        editSubmitText.classList.add('hidden');
+                        editSubmitLoading.classList.remove('hidden');
+                    }
+                });
+            }
         })();
     </script>
 @endsection

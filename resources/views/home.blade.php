@@ -4,54 +4,6 @@
 
 @section('content')
     <div class="w-full md:flex md:items-center md:justify-center">
-        @if($myCards && $myCards->isNotEmpty())
-            <section class="mb-8 w-full" aria-label="Vos cartes">
-                <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
-                    <h2 class="text-lg font-semibold text-[#1b1b18] dark:text-white">Votre espace</h2>
-                    <a href="{{ route('modifier.index') }}" class="text-sm font-medium text-[#f53003] dark:text-[#FF4433] hover:underline">Mon espace →</a>
-                </div>
-                @php
-                    $lastUpdated = $myCards->max('updated_at');
-                    $lastLabel = $lastUpdated ? \Carbon\Carbon::parse($lastUpdated)->locale('fr')->diffForHumans() : '—';
-                @endphp
-                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
-                    <div class="rounded-xl border border-[#e3e3e0] dark:border-[#3E3E3A] bg-[#fafaf9] dark:bg-[#1c1c1a] p-4 text-center">
-                        <p class="text-2xl font-semibold text-[#1b1b18] dark:text-white tabular-nums">{{ $myCards->count() }}</p>
-                        <p class="text-xs text-[#706f6c] dark:text-[#A1A09A] mt-0.5">carte(s)</p>
-                    </div>
-                    <div class="rounded-xl border border-[#e3e3e0] dark:border-[#3E3E3A] bg-[#fafaf9] dark:bg-[#1c1c1a] p-4 text-center">
-                        <p class="text-sm font-medium text-[#1b1b18] dark:text-white truncate">{{ $lastLabel }}</p>
-                        <p class="text-xs text-[#706f6c] dark:text-[#A1A09A] mt-0.5">dernière modif.</p>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    @foreach($myCards as $c)
-                        <article class="rounded-xl border border-[#e3e3e0] dark:border-[#3E3E3A] bg-white dark:bg-[#161615] overflow-hidden">
-                            <div class="p-4">
-                                <div class="flex gap-3 items-center">
-                                    @if($c->avatar_path)
-                                        <img src="{{ Storage::url($c->avatar_path) }}" alt="" class="w-12 h-12 rounded-full object-cover shrink-0" />
-                                    @else
-                                        <div class="w-12 h-12 rounded-full bg-[#e8e8e6] dark:bg-[#2a2a28] flex items-center justify-center text-lg font-semibold text-[#706f6c] dark:text-[#A1A09A] shrink-0">
-                                            {{ strtoupper(mb_substr($c->name, 0, 1)) }}
-                                        </div>
-                                    @endif
-                                    <div class="min-w-0 flex-1">
-                                        <h3 class="font-medium text-[#1b1b18] dark:text-white truncate">{{ $c->name }}</h3>
-                                        <p class="text-xs font-mono text-[#706f6c] dark:text-[#A1A09A]">{{ $c->short_code }}</p>
-                                    </div>
-                                </div>
-                                <div class="mt-3 flex flex-wrap gap-2">
-                                    <a href="{{ route('card.show', $c->short_code) }}" target="_blank" rel="noopener" class="inline-flex items-center px-3 py-1.5 rounded-lg bg-[#1b1b18] dark:bg-[#EDEDEC] text-white dark:text-[#1C1C1A] text-xs font-medium hover:opacity-90">Voir</a>
-                                    <a href="{{ route('modifier.switch', $c->short_code) }}" class="inline-flex items-center px-3 py-1.5 rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A] text-xs font-medium hover:bg-[#f5f5f4] dark:hover:bg-[#252523]">Modifier</a>
-                                </div>
-                            </div>
-                        </article>
-                    @endforeach
-                </div>
-            </section>
-        @endif
-
         @if($newCardCode && $newCardIdentifier)
             <div class="mb-6 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
                 <p class="text-sm font-medium text-amber-800 dark:text-amber-200">Gardez ces infos pour modifier votre carte plus tard</p>
@@ -221,16 +173,29 @@
                     </div>
                     <div class="md:col-span-2">
                         <span class="block text-sm font-medium mb-1.5 text-[#1b1b18] dark:text-white">Photo / Avatar</span>
-                        <label for="avatar" class="flex flex-col items-center justify-center w-full min-h-[100px] rounded-xl border-2 border-dashed border-[#e3e3e0] dark:border-[#3E3E3A] bg-[#fafaf9] dark:bg-[#1c1c1a] hover:border-[#1b1b18] dark:hover:border-[#A1A09A] cursor-pointer transition-colors">
+                        <label for="avatar" id="create-avatar-dropzone" class="flex flex-col items-center justify-center w-full min-h-[100px] rounded-xl border-2 border-dashed border-[#e3e3e0] dark:border-[#3E3E3A] bg-[#fafaf9] dark:bg-[#1c1c1a] hover:border-[#1b1b18] dark:hover:border-[#A1A09A] cursor-pointer transition-colors">
                             <input type="file" name="avatar" id="avatar" accept="image/*" class="hidden">
-                            <span class="text-sm text-[#706f6c] dark:text-[#A1A09A] mt-2">Cliquez ou déposez une photo</span>
-                            <span class="text-xs text-[#706f6c] dark:text-[#A1A09A] mt-0.5">PNG, JPG (max. 2 Mo)</span>
+                            <img id="create-avatar-preview" alt="" class="hidden w-16 h-16 rounded-full object-cover mb-2" />
+                            <span id="create-avatar-dropzone-text" class="text-sm text-[#706f6c] dark:text-[#A1A09A] mt-2">Cliquez ou déposez une photo</span>
+                            <span id="create-avatar-dropzone-subtext" class="text-xs text-[#706f6c] dark:text-[#A1A09A] mt-0.5">PNG, JPG (max. 2 Mo)</span>
+                            <span id="create-avatar-selected-info" class="hidden text-xs text-[#1b1b18] dark:text-[#EDEDEC] mt-1"></span>
                         </label>
                         @error('avatar')<p class="text-xs text-red-600 dark:text-red-400 mt-1">{{ $message }}</p>@enderror
                     </div>
                     <div class="md:col-span-2">
-                        <button type="submit" class="w-full py-2.5 rounded-xl bg-[#1b1b18] dark:bg-[#eeeeec] text-white dark:text-[#1C1C1A] text-sm font-medium hover:opacity-90 active:opacity-80 transition-opacity">
-                            Créer ma carte
+                        <button
+                            type="submit"
+                            id="create-card-submit"
+                            class="w-full py-2.5 rounded-xl bg-[#1b1b18] dark:bg-[#eeeeec] text-white dark:text-[#1C1C1A] text-sm font-medium hover:opacity-90 active:opacity-80 transition-opacity flex items-center justify-center gap-2"
+                        >
+                            <span id="create-card-submit-text">Créer ma carte</span>
+                            <span id="create-card-submit-loading" class="hidden items-center gap-2">
+                                <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" aria-hidden="true">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"></path>
+                                </svg>
+                                <span>Création en cours...</span>
+                            </span>
                         </button>
                     </div>
                     </div>
@@ -305,6 +270,75 @@
                     }
                 });
             });
+
+            var avatarInput = document.getElementById('avatar');
+            var avatarPreview = document.getElementById('create-avatar-preview');
+            var avatarInfo = document.getElementById('create-avatar-selected-info');
+            var avatarDropzone = document.getElementById('create-avatar-dropzone');
+            var avatarDropzoneText = document.getElementById('create-avatar-dropzone-text');
+            var avatarDropzoneSubtext = document.getElementById('create-avatar-dropzone-subtext');
+
+            if (avatarInput && avatarPreview && avatarInfo && avatarDropzone) {
+                avatarInput.addEventListener('change', function() {
+                    var file = this.files && this.files[0];
+                    if (!file) {
+                        avatarPreview.classList.add('hidden');
+                        avatarInfo.classList.add('hidden');
+                        avatarInfo.textContent = '';
+                        avatarDropzone.classList.remove('border-green-500');
+                        avatarDropzone.classList.add('border-[#e3e3e0]');
+                        if (avatarDropzoneText) {
+                            avatarDropzoneText.textContent = 'Cliquez ou déposez une photo';
+                        }
+                        if (avatarDropzoneSubtext) {
+                            avatarDropzoneSubtext.textContent = 'PNG, JPG (max. 2 Mo)';
+                        }
+                        return;
+                    }
+
+                    avatarInfo.textContent = 'Photo sélectionnée : ' + file.name;
+                    avatarInfo.classList.remove('hidden');
+                    avatarDropzone.classList.add('border-green-500');
+                    avatarDropzone.classList.remove('border-[#e3e3e0]');
+                    if (avatarDropzoneText) {
+                        avatarDropzoneText.textContent = 'Une photo a été sélectionnée ✔';
+                    }
+                    if (avatarDropzoneSubtext) {
+                        avatarDropzoneSubtext.textContent = 'N’oubliez pas de cliquer sur "Créer ma carte".';
+                    }
+
+                    if (file.type && file.type.indexOf('image') === 0 && window.FileReader) {
+                        var reader = new FileReader();
+                        reader.onload = function(e) {
+                            avatarPreview.src = e.target.result;
+                            avatarPreview.classList.remove('hidden');
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        avatarPreview.classList.add('hidden');
+                    }
+                });
+            }
+
+            var createForm = document.getElementById('create-card-form');
+            var createSubmit = document.getElementById('create-card-submit');
+            var createSubmitText = document.getElementById('create-card-submit-text');
+            var createSubmitLoading = document.getElementById('create-card-submit-loading');
+
+            if (createForm && createSubmit) {
+                createForm.addEventListener('submit', function() {
+                    if (createSubmit.disabled) {
+                        return;
+                    }
+                    createSubmit.disabled = true;
+                    createSubmit.classList.add('opacity-70', 'cursor-not-allowed');
+
+                    if (createSubmitText && createSubmitLoading) {
+                        createSubmitText.classList.add('hidden');
+                        createSubmitLoading.classList.remove('hidden');
+                    }
+                });
+            }
         })();
     </script>
 @endsection

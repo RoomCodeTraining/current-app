@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\DigitalCard;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
 class HomeController extends Controller
@@ -35,6 +35,32 @@ class HomeController extends Controller
             'myCards' => $myCards,
             'newCardCode' => $request->session()->get('new_card_code'),
             'newCardIdentifier' => $request->session()->get('new_card_identifier'),
+        ]);
+    }
+
+    /**
+     * Tableau de bord : vue centrée sur les cartes de l'utilisateur connecté (session).
+     */
+    public function dashboard(Request $request): View
+    {
+        $card = null;
+        if ($code = $request->query('card')) {
+            $code = strtoupper(trim($code));
+            $card = DigitalCard::where('short_code', $code)->orWhere('slug', $code)->first();
+        }
+
+        $myCards = collect();
+        $ids = $request->session()->get('editing_card_ids', []);
+        if (empty($ids) && $request->session()->has('editing_card_id')) {
+            $ids = [$request->session()->get('editing_card_id')];
+        }
+        if (!empty($ids)) {
+            $myCards = DigitalCard::whereIn('id', $ids)->orderBy('name')->get();
+        }
+
+        return view('dashboard', [
+            'card' => $card,
+            'myCards' => $myCards,
         ]);
     }
 

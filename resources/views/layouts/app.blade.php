@@ -29,13 +29,13 @@
     {{-- Navbar en bas : visible uniquement sur mobile / tablette --}}
     <nav class="nav-bar md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-[#161615]/95 border-t border-[#e3e3e0] dark:border-[#3E3E3A] backdrop-blur-sm">
         <div class="max-w-2xl mx-auto flex items-center justify-around h-14">
-            <a href="{{ route('home') }}" class="flex flex-col items-center justify-center gap-0.5 min-w-[4.5rem] py-2 text-[#706f6c] dark:text-[#A1A09A] hover:text-[#1b1b18] dark:hover:text-white transition-colors {{ request()->routeIs('home') ? 'text-[#1b1b18] dark:text-white font-medium' : '' }}">
+            <a href="{{ (!empty(session('editing_card_ids')) || session('editing_card_id')) ? route('dashboard') : route('home') }}" class="flex flex-col items-center justify-center gap-0.5 min-w-[4.5rem] py-2 text-[#706f6c] dark:text-[#A1A09A] hover:text-[#1b1b18] dark:hover:text-white transition-colors {{ request()->routeIs('home') || request()->routeIs('dashboard') ? 'text-[#1b1b18] dark:text-white font-medium' : '' }}">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                 <span class="text-xs">Accueil</span>
             </a>
-            <a href="{{ route('modifier.index') }}" class="flex flex-col items-center justify-center gap-0.5 min-w-[4.5rem] py-2 text-[#706f6c] dark:text-[#A1A09A] hover:text-[#1b1b18] dark:hover:text-white transition-colors {{ request()->routeIs('modifier.*') ? 'text-[#1b1b18] dark:text-white font-medium' : '' }}">
+            <a href="{{ route('dashboard') }}" class="flex flex-col items-center justify-center gap-0.5 min-w-[4.5rem] py-2 text-[#706f6c] dark:text-[#A1A09A] hover:text-[#1b1b18] dark:hover:text-white transition-colors {{ request()->routeIs('dashboard') || request()->routeIs('modifier.*') ? 'text-[#1b1b18] dark:text-white font-medium' : '' }}">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
-                <span class="text-xs">{{ session('editing_card_id') ? 'Modifier' : 'Mes cartes' }}</span>
+                <span class="text-xs">Mes cartes</span>
             </a>
         </div>
     </nav>
